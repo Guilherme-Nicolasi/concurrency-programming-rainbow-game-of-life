@@ -108,6 +108,21 @@ void NewGeneration(Generation *newGeneration, Generation *generation) {
     }
 }
 
+long long TotalLivingCells(Generation *generation) {
+    size_t i, j;
+    long long totalCels = 0;
+    
+    for(i = 0; i < MAX_SIZE; ++i) {
+        for(j = 0; j < MAX_SIZE; ++j) {
+            if(generation->grid[i][j] > 0.0) {
+                totalCels++;
+            }
+        }
+    }
+    
+    return totalCels;
+}
+
 void PrintGrid(Generation *generation) {
     size_t i, j;
     for(i = 0; i < MAX_SIZE; ++i) {
@@ -142,12 +157,14 @@ int main(int argc, char **argv) {
         NewGeneration(generations[i], generations[i - 1]);
     }
     
-    for(i = 0; i < MAX_GEN; i++) {
+    /*for(i = 0; i < MAX_GEN; i++) {
         PrintGrid(generations[i]);
         printf("\n");
-    }
+    }*/
     
-    for(i = 0; i < MAX_GEN; i++) {
+    printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generations[0]));
+    for(i = 1; i < MAX_GEN; i++) {
+        printf("Geração %ld: %lld\n", i, TotalLivingCells(generations[i]));
         FreeGeneration(generations[i]);
     }
     
