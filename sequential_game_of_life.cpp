@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
+#include <unistd.h>
 
-//#define MAX_SIZE 2048
-#define MAX_SIZE 20
-//#define MAX_GEN 2000
-#define MAX_GEN 5
+#define MAX_SIZE 2048
+//#define MAX_SIZE 20
+#define MAX_GEN 101
+//#define MAX_GEN 5
 
 typedef struct {
     float **grid;
@@ -159,12 +160,20 @@ int main(int argc, char **argv) {
     
     /*for(i = 0; i < MAX_GEN; i++) {
         PrintGrid(generations[i]);
-        printf("\n");
+        if(i != (MAX_GEN - 1)) {
+            sleep(1);
+            system("clear");
+        }
     }*/
     
     printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generations[0]));
-    for(i = 1; i < MAX_GEN; i++) {
-        printf("Geração %ld: %lld\n", i, TotalLivingCells(generations[i]));
+    for (i = 1; i < (MAX_GEN - 1); i++) {
+        printf("Geração %zu: %lld\n", (size_t)i, TotalLivingCells(generations[i]));
+    }
+    printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), TotalLivingCells(generations[MAX_GEN - 1]));
+
+    
+    for(i = 0; i < MAX_GEN; i++) {
         FreeGeneration(generations[i]);
     }
     
