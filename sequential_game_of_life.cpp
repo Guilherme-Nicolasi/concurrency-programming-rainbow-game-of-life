@@ -17,28 +17,28 @@ Generation *InitGeneration(void) {
     Generation *generation = (Generation *)malloc(sizeof(Generation));
     if(generation == NULL) {
         return NULL;
-    } else {
-        generation->grid = (float **)malloc(MAX_SIZE * sizeof(float *));
-        if(generation->grid == NULL) {
+    }
+    
+    generation->grid = (float **)malloc(MAX_SIZE * sizeof(float *));
+    if(generation->grid == NULL) {
+        free(generation);
+        return NULL;
+    }
+        
+    size_t i, j;
+    for(i = 0; i < MAX_SIZE; i++) {
+        generation->grid[i] = (float *)malloc(MAX_SIZE * sizeof(float));
+        if(generation->grid[i] == NULL) {
+            for(j = 0; j < i; j++) {
+                free(generation->grid[j]);
+            }
+            free(generation->grid);
             free(generation);
             return NULL;
         }
         
-        size_t i, j;
-        for(i = 0; i < MAX_SIZE; i++) {
-            generation->grid[i] = (float *)malloc(MAX_SIZE * sizeof(float));
-            if(generation->grid[i] == NULL) {
-                for(j = 0; j < i; j++) {
-                    free(generation->grid[j]);
-                }
-                free(generation->grid);
-                free(generation);
-                return NULL;
-            }
-            
-            for(j = 0; j < MAX_SIZE; j++) {
-                generation->grid[i][j] = 0.0;
-            }
+        for(j = 0; j < MAX_SIZE; j++) {
+            generation->grid[i][j] = 0.0;
         }
     }
     
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
     Generation *generations[MAX_GEN];
     generations[0] = firstGeneration;
     
-    size_t i, row, col;
+    size_t i;
     for(i = 1; i < MAX_GEN; i++) {
         generations[i] = InitGeneration();
         NewGeneration(generations[i], generations[i - 1]);
