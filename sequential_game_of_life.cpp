@@ -7,7 +7,7 @@
 //#define MAX_SIZE 2048
 #define MAX_SIZE 20
 //#define MAX_GEN 2000
-#define MAX_GEN 101
+#define MAX_GEN 160
 
 typedef struct {
     float **grid;
@@ -160,9 +160,9 @@ int main(int argc, char **argv) {
     
     size_t i;
     long long totalLivingCells;
-    printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
+    //printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
     for(i = 1; i < (MAX_GEN - 1); i++) {
-        //PrintGrid(generation);
+        PrintGrid(generation);
         
         Generation *newGeneration = InitGeneration();
         if(newGeneration == NULL) {
@@ -172,20 +172,21 @@ int main(int argc, char **argv) {
         NewGeneration(newGeneration, generation);
         
         totalLivingCells = TotalLivingCells(newGeneration);
-        printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
+        printf("\nGeneration: %zu\nTotal Living Cells: %lld\n", (size_t)i, totalLivingCells);
+        //printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
         
         FreeGeneration(generation);
         generation = newGeneration;
         
         if(i == (MAX_GEN - 1)) {
             FreeGeneration(newGeneration);
-        } /*else {
+        } else {
             sleep(1);
             system("clear");
-        }*/
+        }
     }
-    //PrintGrid(generation);
-    printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), totalLivingCells);
+    PrintGrid(generation);
+    //printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), totalLivingCells);
     
     FreeGeneration(generation);
     return 0;
