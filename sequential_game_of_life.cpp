@@ -4,10 +4,10 @@
 #include <math.h>
 #include <unistd.h>
 
-#define MAX_SIZE 2048
-//#define MAX_SIZE 20
+//#define MAX_SIZE 2048
+#define MAX_SIZE 20
+//#define MAX_GEN 2000
 #define MAX_GEN 101
-//#define MAX_GEN 5
 
 typedef struct {
     float **grid;
@@ -101,10 +101,10 @@ void CellUpdate(float **grid, float **newGrid, size_t i, size_t j, int nCells) {
 }
 
 void NewGeneration(Generation *newGeneration, Generation *generation) {
-    size_t row, col;
-    for(row = 0; row < MAX_SIZE; row++) {
-        for(col = 0; col < MAX_SIZE; col++) {
-            CellUpdate(generation->grid, newGeneration->grid, row, col, GetNeighbors(generation->grid, row, col));
+    size_t i, j;
+    for(i = 0; i < MAX_SIZE; i++) {
+        for(j = 0; j < MAX_SIZE; j++) {
+            CellUpdate(generation->grid, newGeneration->grid, i, j, GetNeighbors(generation->grid, i, j));
         }
     }
 }
@@ -128,8 +128,13 @@ void PrintGrid(Generation *generation) {
     size_t i, j;
     for(i = 0; i < MAX_SIZE; ++i) {
         for(j = 0; j < MAX_SIZE; ++j) {
-            printf("%.0f ", generation->grid[i][j]);
-        } printf("\n");
+            if(generation->grid[i][j] == 1.0) {
+                printf("\033[1;31m%.0f\033[0m ", generation->grid[i][j]);
+            } else {
+                printf("%.0f ", generation->grid[i][j]);
+            }
+        }
+        printf("\n");
     }
 }
 
@@ -146,36 +151,42 @@ void FreeGeneration(Generation *generation) {
 }
 
 int main(int argc, char **argv) {
-    Generation *firstGeneration = InitGeneration();
-    AddInitialCells(firstGeneration);
+    Generation *generation = InitGeneration();
+    if(generation == NULL) {
+        return -1;
+    }
     
-    Generation *generations[MAX_GEN];
-    generations[0] = firstGeneration;
+    AddInitialCells(generation);
     
     size_t i;
-    for(i = 1; i < MAX_GEN; i++) {
-        generations[i] = InitGeneration();
-        NewGeneration(generations[i], generations[i - 1]);
-    }
-    
-    /*for(i = 0; i < MAX_GEN; i++) {
-        PrintGrid(generations[i]);
-        if(i != (MAX_GEN - 1)) {
+    long long totalLivingCells;
+    printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
+    for(i = 1; i < (MAX_GEN - 1); i++) {
+        //PrintGrid(generation);
+        
+        Generation *newGeneration = InitGeneration();
+        if(newGeneration == NULL) {
+            return -1;
+        }
+        
+        NewGeneration(newGeneration, generation);
+        
+        totalLivingCells = TotalLivingCells(newGeneration);
+        printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
+        
+        FreeGeneration(generation);
+        generation = newGeneration;
+        
+        if(i == (MAX_GEN - 1)) {
+            FreeGeneration(newGeneration);
+        } /*else {
             sleep(1);
             system("clear");
-        }
-    }*/
-    
-    printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generations[0]));
-    for (i = 1; i < (MAX_GEN - 1); i++) {
-        printf("Geração %zu: %lld\n", (size_t)i, TotalLivingCells(generations[i]));
+        }*/
     }
-    printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), TotalLivingCells(generations[MAX_GEN - 1]));
-
+    //PrintGrid(generation);
+    printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), totalLivingCells);
     
-    for(i = 0; i < MAX_GEN; i++) {
-        FreeGeneration(generations[i]);
-    }
-    
+    FreeGeneration(generation);
     return 0;
 }
