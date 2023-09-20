@@ -4,10 +4,8 @@
 #include <math.h>
 #include <unistd.h>
 
-//#define MAX_SIZE 2048
-#define MAX_SIZE 20
-//#define MAX_GEN 2000
-#define MAX_GEN 160
+#define MAX_SIZE 2048
+#define MAX_GEN 2000
 #define MAX_NEIGHBORS 8
 
 typedef struct {
@@ -35,9 +33,9 @@ int main(int argc, char **argv) {
     
     size_t i;
     long long totalLivingCells;
-    //printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
+    printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
     for(i = 1; i < (MAX_GEN - 1); i++) {
-        PrintGrid(generation);
+        //PrintGrid(generation);
         
         Generation *newGeneration = InitGeneration();
         if(newGeneration == NULL) {
@@ -47,20 +45,20 @@ int main(int argc, char **argv) {
         NewGeneration(newGeneration, generation);
         
         totalLivingCells = TotalLivingCells(newGeneration);
-        printf("\nGeneration: %zu\nTotal Living Cells: %lld\n", (size_t)i, totalLivingCells);
-        //printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
+        //printf("\nGeneration: %zu\nTotal Living Cells: %lld\n", (size_t)i, totalLivingCells);
+        printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
         
         FreeGeneration(generation);
         generation = newGeneration;
         
         if(i == (MAX_GEN - 1)) {
             FreeGeneration(newGeneration);
-        } else {
+        } /*else {
             sleep(1);
             printf("\033c");
-        }
+        }*/
     }
-    PrintGrid(generation);
+    //PrintGrid(generation);
     printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), totalLivingCells);
     
     FreeGeneration(generation);
@@ -78,7 +76,7 @@ Generation *InitGeneration(void) {
         free(generation);
         return NULL;
     }
-        
+    
     size_t i, j;
     for(i = 0; i < MAX_SIZE; i++) {
         generation->grid[i] = (float *)malloc(MAX_SIZE * sizeof(float));
@@ -117,21 +115,20 @@ void AddInitialCells(Generation *generation) {
 }
 
 int GetNeighbors(float **grid, size_t i, size_t j) {
-    size_t x, y;
     int nCells = 0;
-    
-    if((i > 0 && i < MAX_SIZE) && (j > 0 && j < MAX_SIZE)) {
-        for(x = (i - 1); x <= (i + 1); x++) {
-            for(y = (j - 1); y <= (j + 1); y++) {
-                if((x >= 0 && x < MAX_SIZE) && (y >= 0 && y < MAX_SIZE) && !(x == i && y == j)) {
-                    if(grid[x][y] == 1.0) {
-                        nCells++;
-                    }
+
+    int x, y;
+    for(x = -1; x <= 1; x++) {
+        for(y = -1; y <= 1; y++) {
+            if(!(x == 0 && y == 0)) {
+                //Periodic Boundary
+                if(grid[(i + x + MAX_SIZE) % MAX_SIZE][(j + y + MAX_SIZE) % MAX_SIZE] == 1.0) {
+                    nCells++;
                 }
             }
         }
     }
-    
+
     return nCells;
 }
 
