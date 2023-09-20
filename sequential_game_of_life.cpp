@@ -137,7 +137,7 @@ bool IsAlive(float **grid, size_t i, size_t j) {
 }
 
 float AverageNeighbors(int nCells) {
-    return ((float)(nCells / MAX_NEIGHBORS));
+    return ((float)nCells / MAX_NEIGHBORS);
 }
 
 void CellUpdate(float **grid, float **newGrid, size_t i, size_t j, int nCells) {
@@ -147,7 +147,7 @@ void CellUpdate(float **grid, float **newGrid, size_t i, size_t j, int nCells) {
         } else {
             newGrid[i][j] = 0.0;
         }
-    } else if(nCells == 3) {
+    } else if(AverageNeighbors(nCells) > 0.0 && nCells == 3) {
         newGrid[i][j] = 1.0;
     }
 }
