@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <math.h>
 #include <unistd.h>
 
 #define MAX_SIZE 2048
-#define MAX_GEN 2000
+#define MAX_GEN 2001
 #define MAX_NEIGHBORS 8
 
 typedef struct {
@@ -19,6 +20,7 @@ bool IsAlive(float **grid, size_t i, size_t j);
 float AverageNeighbors(int nCells);
 void CellUpdate(float **grid, float **newGrid, size_t i, size_t j, int nCells);
 void NewGeneration(Generation *newGeneration, Generation *generation);
+bool CheckGeneration(Generation *newGeneration, Generation *generation);
 long long TotalLivingCells(Generation *generation);
 void PrintGrid(Generation *generation);
 void FreeGeneration(Generation *generation);
@@ -43,6 +45,10 @@ int main(int argc, char **argv) {
         }
         
         NewGeneration(newGeneration, generation);
+        /*if(CheckGeneration(newGeneration, generation)) {
+            FreeGeneration(newGeneration);
+            break;
+        }*/
         
         totalLivingCells = TotalLivingCells(newGeneration);
         //printf("\nGeneration: %zu\nTotal Living Cells: %lld\n", (size_t)i, totalLivingCells);
@@ -160,6 +166,9 @@ void NewGeneration(Generation *newGeneration, Generation *generation) {
         }
     }
 }
+
+/*bool CheckGeneration(Generation *newGeneration, Generation *generation) {
+}*/
 
 long long TotalLivingCells(Generation *generation) {
     size_t i, j;
