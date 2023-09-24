@@ -1,3 +1,4 @@
+// serial
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -8,6 +9,7 @@
 #define MAX_SIZE 2048
 #define MAX_GEN 2001
 #define MAX_NEIGHBORS 8
+
 
 typedef struct {
     float **grid;
@@ -30,34 +32,43 @@ int main(int argc, char **argv) {
     if(generation == NULL) {
         return -1;
     }
-    
+
     AddInitialCells(generation);
-    
+
     size_t i;
     long long totalLivingCells;
     printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
     for(i = 1; i < (MAX_GEN - 1); i++) {
-        
+        //PrintGrid(generation);
+
         Generation *newGeneration = InitGeneration();
         if(newGeneration == NULL) {
             return -1;
         }
-        
+
         NewGeneration(newGeneration, generation);
-        
+        // if(CheckGeneration(newGeneration, generation)) {
+        //     FreeGeneration(newGeneration);
+        //     break;
+        // }
+
         totalLivingCells = TotalLivingCells(newGeneration);
         //printf("\nGeneration: %zu\nTotal Living Cells: %lld\n", (size_t)i, totalLivingCells);
         printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
-        
+
         FreeGeneration(generation);
         generation = newGeneration;
-        
+
         if(i == (MAX_GEN - 1)) {
             FreeGeneration(newGeneration);
-        }
+        } /*else {
+            sleep(1);
+            printf("\033c");
+        }*/
     }
+    //PrintGrid(generation);
     printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), totalLivingCells);
-    
+
     FreeGeneration(generation);
     return 0;
 }
@@ -67,13 +78,13 @@ Generation *InitGeneration(void) {
     if(generation == NULL) {
         return NULL;
     }
-    
+
     generation->grid = (float **)malloc(MAX_SIZE * sizeof(float *));
     if(generation->grid == NULL) {
         free(generation);
         return NULL;
     }
-    
+
     size_t i, j;
     for(i = 0; i < MAX_SIZE; i++) {
         generation->grid[i] = (float *)malloc(MAX_SIZE * sizeof(float));
@@ -81,17 +92,17 @@ Generation *InitGeneration(void) {
             for(j = 0; j < i; j++) {
                 free(generation->grid[j]);
             }
-            
+
             free(generation->grid);
             free(generation);
             return NULL;
         }
-        
+
         for(j = 0; j < MAX_SIZE; j++) {
             generation->grid[i][j] = 0.0;
         }
     }
-    
+
     return generation;
 }
 
@@ -102,7 +113,7 @@ void AddInitialCells(Generation *generation) {
     generation->grid[i + 2][j] = 1.0;
     generation->grid[i + 2][j + 1] = 1.0;
     generation->grid[i + 2][j + 2] = 1.0;
-    
+
     i = 10; j = 30;
     generation->grid[i][j + 1] = 1.0;
     generation->grid[i][j + 2] = 1.0;
@@ -149,8 +160,24 @@ void CellUpdate(float **grid, float **newGrid, size_t i, size_t j, int nCells) {
     }
 }
 
+bool CheckGeneration(Generation *newGeneration, Generation *generation) {
+    size_t i, j;
+
+
+    for(i = 0; i < MAX_SIZE; i++) {
+        for(j = 0; j < MAX_SIZE; j++) {
+            if((newGeneration->grid[i][j] != generation->grid[i][j])) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 void NewGeneration(Generation *newGeneration, Generation *generation) {
     size_t i, j;
+
     for(i = 0; i < MAX_SIZE; i++) {
         for(j = 0; j < MAX_SIZE; j++) {
             CellUpdate(generation->grid, newGeneration->grid, i, j, GetNeighbors(generation->grid, i, j));
@@ -158,18 +185,21 @@ void NewGeneration(Generation *newGeneration, Generation *generation) {
     }
 }
 
+/*bool CheckGeneration(Generation *newGeneration, Generation *generation) {
+}*/
+
 long long TotalLivingCells(Generation *generation) {
     size_t i, j;
     long long totalCels = 0;
-    
-    for(i = 0; i < MAX_SIZE; ++i) {
-        for(j = 0; j < MAX_SIZE; ++j) {
-            if(generation->grid[i][j] > 0.0) {
-                totalCels++;
+
+        for(i = 0; i < MAX_SIZE; ++i) {
+            for(j = 0; j < MAX_SIZE; ++j) {
+                if(generation->grid[i][j] > 0.0) {
+                    totalCels++;
+                }
             }
         }
-    }
-    
+
     return totalCels;
 }
 
@@ -193,7 +223,7 @@ void FreeGeneration(Generation *generation) {
         for(i = 0; i < MAX_SIZE; i++) {
             free(generation->grid[i]);
         }
-        
+
         free(generation->grid);
         free(generation);
     }
