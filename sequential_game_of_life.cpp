@@ -37,7 +37,6 @@ int main(int argc, char **argv) {
     long long totalLivingCells;
     printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
     for(i = 1; i < (MAX_GEN - 1); i++) {
-        //PrintGrid(generation);
         
         Generation *newGeneration = InitGeneration();
         if(newGeneration == NULL) {
@@ -45,10 +44,6 @@ int main(int argc, char **argv) {
         }
         
         NewGeneration(newGeneration, generation);
-        /*if(CheckGeneration(newGeneration, generation)) {
-            FreeGeneration(newGeneration);
-            break;
-        }*/
         
         totalLivingCells = TotalLivingCells(newGeneration);
         //printf("\nGeneration: %zu\nTotal Living Cells: %lld\n", (size_t)i, totalLivingCells);
@@ -59,12 +54,8 @@ int main(int argc, char **argv) {
         
         if(i == (MAX_GEN - 1)) {
             FreeGeneration(newGeneration);
-        } /*else {
-            sleep(1);
-            printf("\033c");
-        }*/
+        }
     }
-    //PrintGrid(generation);
     printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), totalLivingCells);
     
     FreeGeneration(generation);
@@ -166,9 +157,6 @@ void NewGeneration(Generation *newGeneration, Generation *generation) {
         }
     }
 }
-
-/*bool CheckGeneration(Generation *newGeneration, Generation *generation) {
-}*/
 
 long long TotalLivingCells(Generation *generation) {
     size_t i, j;
