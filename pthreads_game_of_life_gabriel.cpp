@@ -55,11 +55,7 @@ int main(int argc, char **argv) {
     printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
     for(i = 1; i < (MAX_GEN - 1); i++) {
         //PrintGrid(generation);
-        
-        Generation *newGeneration = InitGeneration();
-        if(newGeneration == NULL) {
-            return -1;
-        }
+    
         
         // NewGeneration(newGeneration, generation);
         /*if(CheckGeneration(newGeneration, generation)) {
@@ -67,19 +63,6 @@ int main(int argc, char **argv) {
             break;
         }*/
         
-        totalLivingCells = TotalLivingCells(newGeneration);
-        //printf("\nGeneration: %zu\nTotal Living Cells: %lld\n", (size_t)i, totalLivingCells);
-        printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
-        
-        FreeGeneration(generation);
-        generation = newGeneration;
-        
-        if(i == (MAX_GEN - 1)) {
-            FreeGeneration(newGeneration);
-        } /*else {
-            sleep(1);
-            printf("\033c");
-        }*/
     }
     //PrintGrid(generation);
     printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), totalLivingCells);
@@ -179,16 +162,34 @@ void CellUpdate(float **grid, float **newGrid, size_t i, size_t j, int nCells) {
     }
 }
 
-void NewGeneration(void *generation) {
-
-    Generation *newGeneration = generation;
+void NewGeneration(void *arg) {
+        Generation *newGeneration = InitGeneration();
+            if(newGeneration == NULL) {
+                system("EXIT");
+        }
     size_t i, j;
-    for(i = 0; i < MAX_SIZE; i++) {
+    for(i = 0; i < MAX_SIZE/NUM_THREADS; i++) {
         for(j = 0; j < MAX_SIZE; j++) {
             CellUpdate(generation->grid, newGeneration->grid, i, j, GetNeighbors(generation->grid, i, j));
         }
     }
+     int totalLivingCells = TotalLivingCells(newGeneration);
+        //printf("\nGeneration: %zu\nTotal Living Cells: %lld\n", (size_t)i, totalLivingCells);
+        printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
+        
+        FreeGeneration(generation);
+        generation = newGeneration;
+        
+        if(i == (MAX_GEN - 1)) {
+            FreeGeneration(newGeneration);
+        } /*else {
+            sleep(1);
+            printf("\033c");
+        }*/
 }
+
+/*bool CheckGeneration(Generation *newGeneration, Generation *generation) {
+}*/
 
 long long TotalLivingCells(Generation *generation) {
     size_t i, j;
