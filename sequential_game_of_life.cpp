@@ -1,32 +1,4 @@
-[19:10, 24/09/2023] Amor ❤️: #include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <math.h>
-#include <unistd.h>
-#include <omp.h>
-
-#define MAX_SIZE 2048
-#define MAX_GEN 2001
-#define MAX_NEIGHBORS 8
-#define NTHREADS 2
-
-typedef struct {
-    float **grid;
-} Generation;
-
-Generation *InitGeneration(void);
-void AddInitialCells(Generation *generation);
-int GetNeighbors(float **grid, size_t i, size_t j);
-bool IsAlive(float **grid, size_t i, size_t j);
-float AverageNeighbors(int nCells);
-void CellUpdate(float **grid, float **newGrid, size_t i, size_t j, int nCells);
-void NewGeneration(Generation *newGeneration, Generation *generation);
-bool CheckGeneration(Generation *newGeneration, Generation *generation);
-long long TotalLivingCells(Generation *generation);
-voi…
-[19:25, 24/09/2023] Amor ❤️: - montar um gráfico de speedup (slide 24) para 1, 2, 4 e 8 threads
-[19:42, 24/09/2023] Amor ❤️: #include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -60,7 +32,7 @@ int main(int argc, char **argv) {
     if(generation == NULL) {
         return -1;
     }
-    omp_set_num_threads(8);
+    omp_set_num_threads(4);
 
     AddInitialCells(generation);
 
