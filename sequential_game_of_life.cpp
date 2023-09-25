@@ -1,4 +1,3 @@
-// serial
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -9,7 +8,6 @@
 #define MAX_SIZE 2048
 #define MAX_GEN 2001
 #define MAX_NEIGHBORS 8
-
 
 typedef struct {
     float **grid;
@@ -47,10 +45,6 @@ int main(int argc, char **argv) {
         }
 
         NewGeneration(newGeneration, generation);
-        // if(CheckGeneration(newGeneration, generation)) {
-        //     FreeGeneration(newGeneration);
-        //     break;
-        // }
 
         totalLivingCells = TotalLivingCells(newGeneration);
         //printf("\nGeneration: %zu\nTotal Living Cells: %lld\n", (size_t)i, totalLivingCells);
@@ -163,7 +157,6 @@ void CellUpdate(float **grid, float **newGrid, size_t i, size_t j, int nCells) {
 bool CheckGeneration(Generation *newGeneration, Generation *generation) {
     size_t i, j;
 
-
     for(i = 0; i < MAX_SIZE; i++) {
         for(j = 0; j < MAX_SIZE; j++) {
             if((newGeneration->grid[i][j] != generation->grid[i][j])) {
@@ -185,20 +178,17 @@ void NewGeneration(Generation *newGeneration, Generation *generation) {
     }
 }
 
-/*bool CheckGeneration(Generation *newGeneration, Generation *generation) {
-}*/
-
 long long TotalLivingCells(Generation *generation) {
     size_t i, j;
     long long totalCels = 0;
 
-        for(i = 0; i < MAX_SIZE; ++i) {
-            for(j = 0; j < MAX_SIZE; ++j) {
-                if(generation->grid[i][j] > 0.0) {
-                    totalCels++;
-                }
+    for(i = 0; i < MAX_SIZE; ++i) {
+        for(j = 0; j < MAX_SIZE; ++j) {
+            if(generation->grid[i][j] > 0.0) {
+                totalCels++;
             }
         }
+    }
 
     return totalCels;
 }
