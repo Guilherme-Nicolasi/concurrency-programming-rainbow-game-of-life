@@ -15,39 +15,70 @@ typedef struct {
     float **grid;
 } Generation;
 
+typedef struct {
+    size_t start;
+    size_t end;
+    Generation *generation;
+    Generation *newGeneration;
+} Thread;
+
 Generation *InitGeneration(void);
 void AddInitialCells(Generation *generation);
 int GetNeighbors(float **grid, size_t i, size_t j);
 bool IsAlive(float **grid, size_t i, size_t j);
 float AverageNeighbors(int nCells);
 void CellUpdate(float **grid, float **newGrid, size_t i, size_t j, int nCells);
-void NewGeneration(Generation *newGeneration, Generation *generation);
-bool CheckGeneration(Generation *newGeneration, Generation *generation);
+void *NewGeneration(void *arg);
 long long TotalLivingCells(Generation *generation);
 void PrintGrid(Generation *generation);
 void FreeGeneration(Generation *generation);
-void *ThreadNewGeration(void *arg);
 
 int main(int argc, char **argv) {
-    size_t i, th;
+    size_t i, j;
     long long totalLivingCells;
 
     pthread_t threads[NUM_THREADS];
+    Thread thread[NUM_THREADS];
 
-    for(th = 0; th < NUM_THREADS; th++) {
-        if(!pthread_create(&threads[th], NULL, ThreadNewGeration, NULL)) {
-            return -1;
-        }
+    Generation *generation = InitGeneration();
+    if(generation == NULL) {
+        return -1;
     }
     
-    for(th = 0; th < NUM_THREADS; th++) {
-        if(!pthread_join(threads[th], NULL)) {
-            return -1;
+    AddInitialCells(generation);
+    
+    printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
+    for(i = 1; i < (MAX_GEN - 1); i++) {
+        Generation *newGeneration = InitGeneration();
+        if(newGeneration == NULL) {
+            break;
         }
+        
+        for(j = 0; j < NUM_THREADS; j++) {
+            thread[j].start = (j * (MAX_SIZE / NUM_THREADS));
+            thread[j].end = ((j + 1) * (MAX_SIZE / NUM_THREADS));
+            thread[j].generation = generation;
+            thread[j].newGeneration = newGeneration;
+            pthread_create(&threads[j], NULL, NewGeneration, &thread[j]);
+        }
+
+        for(j = 0; j < NUM_THREADS; j++) {
+            pthread_join(threads[j], NULL);
+        }
+        
+        totalLivingCells = TotalLivingCells(newGeneration);
+        printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
+        
+        if(i == (MAX_GEN - 1)) {
+            FreeGeneration(newGeneration);
+        }
+
+        generation = newGeneration;
     }
 
-    //printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), totalLivingCells);
-
+    printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), totalLivingCells);
+    
+    FreeGeneration(generation);
     return 0;
 }
 
@@ -130,13 +161,17 @@ void CellUpdate(float **grid, float **newGrid, size_t i, size_t j, int nCells) {
     }
 }
 
-void NewGeneration(Generation *newGeneration, Generation *generation) {
+void *NewGeneration(void *arg) {
     size_t i, j;
-    for(i = 0; i < MAX_SIZE; i++) {
+    Thread *thread = (Thread *)arg;
+    for(i = thread->start; i < thread->end; i++) {
         for(j = 0; j < MAX_SIZE; j++) {
-            CellUpdate(generation->grid, newGeneration->grid, i, j, GetNeighbors(generation->grid, i, j));
+            CellUpdate(thread->generation->grid, thread->newGeneration->grid, i, j, GetNeighbors(thread->generation->grid, i, j));
         }
     }
+
+    pthread_exit(NULL);
+    return NULL;
 }
 
 long long TotalLivingCells(Generation *generation) {
@@ -154,20 +189,6 @@ long long TotalLivingCells(Generation *generation) {
     return totalCells;
 }
 
-void PrintGrid(Generation *generation) {
-    size_t i, j;
-    for(i = 0; i < MAX_SIZE; ++i) {
-        for(j = 0; j < MAX_SIZE; ++j) {
-            if(generation->grid[i][j] == 1.0) {
-                printf("\033[1;31m%.0f\033[0m ", generation->grid[i][j]);
-            } else {
-                printf("%.0f ", generation->grid[i][j]);
-            }
-        }
-        printf("\n");
-    }
-}
-
 void FreeGeneration(Generation *generation) {
     if(generation != NULL) {
         size_t i;
@@ -179,39 +200,4 @@ void FreeGeneration(Generation *generation) {
         free(generation);
         generation = NULL;
     }
-}
-
-void *ThreadNewGeration(void *arg) {
-    size_t i;
-    int totalLivingCells;
-
-    Generation *generation = InitGeneration();
-    if(generation == NULL) {
-        system("EXIT");
-    }
-
-    AddInitialCells(generation);
-
-    printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
-
-    for(i = 1; i < (MAX_GEN - 1); i++) {
-        Generation *newGeneration = InitGeneration();
-        if(newGeneration == NULL) {
-            break;
-        }
-
-        NewGeneration(newGeneration, generation);
-        
-        totalLivingCells = TotalLivingCells(newGeneration);
-
-        printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
-        
-        if(i == (MAX_GEN - 1)) {
-            FreeGeneration(newGeneration);
-        }
-
-        generation = newGeneration;
-    }
-
-    FreeGeneration(generation);
 }

@@ -4,10 +4,12 @@
 #include <string.h>
 #include <math.h>
 #include <unistd.h>
+#include <omp.h>
 
 #define MAX_SIZE 2048
 #define MAX_GEN 2001
 #define MAX_NEIGHBORS 8
+#define NUM_THREADS 4
 
 typedef struct {
     float **grid;
@@ -26,48 +28,61 @@ void PrintGrid(Generation *generation);
 void FreeGeneration(Generation *generation);
 
 int main(int argc, char **argv) {
-    Generation *generation = InitGeneration();
-    if(generation == NULL) {
-        return -1;
-    }
-    
-    AddInitialCells(generation);
-    
     size_t i;
     long long totalLivingCells;
-    printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
-    for(i = 1; i < (MAX_GEN - 1); i++) {
-        //PrintGrid(generation);
-        
-        Generation *newGeneration = InitGeneration();
-        if(newGeneration == NULL) {
+
+    #pragma omp parallel num_threads(NUM_THREADS)
+    {
+        Generation *generation = InitGeneration();
+        if(generation == NULL) {
             return -1;
         }
         
-        NewGeneration(newGeneration, generation);
-        /*if(CheckGeneration(newGeneration, generation)) {
-            FreeGeneration(newGeneration);
-            break;
-        }*/
+        AddInitialCells(generation);
         
-        totalLivingCells = TotalLivingCells(newGeneration);
-        //printf("\nGeneration: %zu\nTotal Living Cells: %lld\n", (size_t)i, totalLivingCells);
-        printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
+        printf("** Rainbow Game of Life\nCondição inicial: %lld\n", TotalLivingCells(generation));
+        for(i = 1; i < (MAX_GEN - 1); i++) {
+            //PrintGrid(generation);
+            
+            Generation *newGeneration = InitGeneration();
+            if(newGeneration == NULL) {
+                break;
+            }
+            
+            NewGeneration(newGeneration, generation);
+            /*if(CheckGeneration(newGeneration, generation)) {
+                FreeGeneration(newGeneration);
+                break;
+            }*/
+            
+            #pragma omp barrier
+            totalLivingCells = TotalLivingCells(newGeneration);
+            #pragma omp master
+            {
+                //printf("\nGeneration: %zu\nTotal Living Cells: %lld\n", (size_t)i, totalLivingCells);
+                printf("Geração %zu: %lld\n", (size_t)i, totalLivingCells);
+            }
+            
+            if(i == (MAX_GEN - 1)) {
+                FreeGeneration(newGeneration);
+            } /*else {
+                sleep(1);
+                printf("\033c");
+            }*/
+
+            generation = newGeneration;
+
+            #pragma omp barrier
+        }
+        //PrintGrid(generation);
+        #pragma omp master
+        {
+            printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), totalLivingCells);
+        }
         
         FreeGeneration(generation);
-        generation = newGeneration;
-        
-        if(i == (MAX_GEN - 1)) {
-            FreeGeneration(newGeneration);
-        } /*else {
-            sleep(1);
-            printf("\033c");
-        }*/
     }
-    //PrintGrid(generation);
-    printf("Última geração (%zu iterações): %lld células vivas\n", (size_t)(MAX_GEN - 1), totalLivingCells);
-    
-    FreeGeneration(generation);
+
     return 0;
 }
 
@@ -87,18 +102,10 @@ Generation *InitGeneration(void) {
     for(i = 0; i < MAX_SIZE; i++) {
         generation->grid[i] = (float *)malloc(MAX_SIZE * sizeof(float));
         if(generation->grid[i] == NULL) {
-            for(j = 0; j < i; j++) {
-                free(generation->grid[j]);
-            }
-            
-            free(generation->grid);
-            free(generation);
-            return NULL;
+            FreeGeneration(generation);
         }
-        
-        for(j = 0; j < MAX_SIZE; j++) {
-            generation->grid[i][j] = 0.0;
-        }
+
+        memset(generation->grid[i], 0, MAX_SIZE * sizeof(float));
     }
     
     return generation;
@@ -124,6 +131,7 @@ int GetNeighbors(float **grid, size_t i, size_t j) {
     int nCells = 0;
 
     int x, y;
+    #pragma omp parallel for collapse(2) reduction(+:nCells)
     for(x = -1; x <= 1; x++) {
         for(y = -1; y <= 1; y++) {
             if(!(x == 0 && y == 0)) {
@@ -160,6 +168,7 @@ void CellUpdate(float **grid, float **newGrid, size_t i, size_t j, int nCells) {
 
 void NewGeneration(Generation *newGeneration, Generation *generation) {
     size_t i, j;
+    #pragma omp parallel for collapse(2)
     for(i = 0; i < MAX_SIZE; i++) {
         for(j = 0; j < MAX_SIZE; j++) {
             CellUpdate(generation->grid, newGeneration->grid, i, j, GetNeighbors(generation->grid, i, j));
@@ -167,22 +176,35 @@ void NewGeneration(Generation *newGeneration, Generation *generation) {
     }
 }
 
-/*bool CheckGeneration(Generation *newGeneration, Generation *generation) {
-}*/
+bool CheckGeneration(Generation *newGeneration, Generation *generation) {
+    size_t i, j;
+    bool equal = true;
+    #pragma omp parallel for collapse(2) reduction(&&:equal)
+    for(i = 0; i < MAX_SIZE; i++) {
+        for(j = 0; j < MAX_SIZE; j++) {
+            if(newGeneration->grid[i][j] != generation->grid[i][j]) {
+                equal = false;
+            }
+        }
+    }
+
+    return equal;
+}
 
 long long TotalLivingCells(Generation *generation) {
-    size_t i, j;
-    long long totalCels = 0;
+    long long totalCells = 0;
     
+    size_t i, j;
+    #pragma omp parallel for collapse(2) reduction(+:totalCells)
     for(i = 0; i < MAX_SIZE; ++i) {
         for(j = 0; j < MAX_SIZE; ++j) {
             if(generation->grid[i][j] > 0.0) {
-                totalCels++;
+                totalCells++;
             }
         }
     }
     
-    return totalCels;
+    return totalCells;
 }
 
 void PrintGrid(Generation *generation) {
@@ -200,7 +222,7 @@ void PrintGrid(Generation *generation) {
 }
 
 void FreeGeneration(Generation *generation) {
-    if(generation) {
+    if(generation != NULL) {
         size_t i;
         for(i = 0; i < MAX_SIZE; i++) {
             free(generation->grid[i]);
@@ -208,5 +230,6 @@ void FreeGeneration(Generation *generation) {
         
         free(generation->grid);
         free(generation);
+        generation = NULL;
     }
 }
