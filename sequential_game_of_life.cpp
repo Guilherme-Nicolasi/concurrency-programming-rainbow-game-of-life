@@ -194,11 +194,14 @@ long long TotalLivingCells(Generation *generation) {
     size_t i, j;
     long long totalCels = 0;
 
-        #pragma omp parallel for private(j) reduction(+:totalCels)
+        #pragma omp parallel for private(j)
         for(i = 0; i < MAX_SIZE; ++i) {
             for(j = 0; j < MAX_SIZE; ++j) {
                 if(generation->grid[i][j] > 0.0) {
-                    totalCels++;
+                    #pragma omp critical
+                    {
+                        totalCels++;
+                    }
                 }
             }
         }
