@@ -190,6 +190,8 @@ void NewGeneration(Generation *newGeneration, Generation *generation) {
 /*bool CheckGeneration(Generation *newGeneration, Generation *generation) {
 }*/
 
+/*Utilize uma operação de redução através da diretiva #pragma omp for 
+reduction(???) para realizar a mesma operação.*/
 long long TotalLivingCells(Generation *generation) {
     size_t i, j;
     long long totalCels = 0;
